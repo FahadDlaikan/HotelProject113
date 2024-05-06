@@ -1,6 +1,6 @@
 import java.io.*;
 
-public class HotelReservation {
+public class HotelReservation  {
 	
 	private int reservationID;
 	private String checkInDate;
@@ -12,7 +12,13 @@ public class HotelReservation {
 	private static int ReservationID = 101;
 
 	// Constructor
-	public HotelReservation(String checkInDate, String checkOutDate,int capacity) {
+	public HotelReservation(String checkInDate, String checkOutDate,int capacity)  {
+		if(capacity < 0)
+			try {
+				throw new Exception("Capacity cannot be negative");
+			}catch(Exception e) {
+				e.getMessage();
+			}
 		this.reservationID =  ReservationID++;
 		this.checkInDate = checkInDate;
 		this.checkOutDate = checkOutDate;
@@ -40,9 +46,10 @@ public class HotelReservation {
 		return totalCost;
 	}
 
-	public boolean addRoom(Room room) {
+	public boolean addRoom(Room room) throws ArrayIndexOutOfBoundsException {
+		if(nbRooms <0 || nbRooms > rooms.length)
+			throw new ArrayIndexOutOfBoundsException("Number of rooms is out of Array boundary.");
 		if (nbRooms >= rooms.length) {
-
 			System.out.println("Cannot add more rooms. Capacity has been reached.");
 			return false;
 		}
@@ -97,7 +104,7 @@ public class HotelReservation {
 		System.out.println("You have booked a total of " + nbRooms + " rooms.");
 	}
 	
-	// write 
+	// Write 
 	public void savetofile(String f) throws IOException{  
         File file=new File(f);  
         FileOutputStream fileOutput=new FileOutputStream(file);  
@@ -109,7 +116,7 @@ public class HotelReservation {
         objectOutput.close();  
     }  
 	
-	//write
+	//Write
 	
 	public void savetofile(int roomNumber,String f) throws IOException{  
 	    File file=new File(f);;  
@@ -124,7 +131,7 @@ public class HotelReservation {
 	  
 	    }  
 	
-	// read
+	// Read
 	
 	public void LoadFromfile(String filename, Suite suite[]) throws IOException{  
 	    int index=0;  

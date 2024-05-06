@@ -1,4 +1,6 @@
-public abstract class Room {
+import java.io.Serializable;
+
+public abstract class Room implements Serializable {
 	    protected int roomNumber;
 	    protected String type;
 	    protected boolean availability;
