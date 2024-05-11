@@ -1,0 +1,228 @@
+package project2;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Scanner;
+
+public class HotelReservationGUI extends JFrame {
+    private JTextField checkInField, checkOutField, customerNameField, customerPhoneField, capacityField;
+    private JRadioButton regularRoomButton, suiteRoomButton;
+    private JButton submitButton, saveButton, loadFileButton, newReservationButton, showRoomListButton ;
+    private JTextArea displayArea;
+    private JFrame roomListFrame;
+    private ButtonGroup roomTypeGroup;
+
+    public HotelReservationGUI() {
+        createAndShowGUI();
+        
+    }
+   
+    private void createAndShowGUI() {
+        setTitle("Hotel Reservation System");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setResizable(true);  // sets the window to resizable
+
+        
+        JPanel inputPanel = new JPanel(new GridLayout(0, 2, 10, 4));
+        inputPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        customerNameField = new JTextField();
+        customerPhoneField = new JTextField();
+        capacityField = new JTextField();
+        checkInField = new JTextField();
+        checkOutField = new JTextField();
+        
+        regularRoomButton = new JRadioButton("Regular Room", true);
+        suiteRoomButton = new JRadioButton("Suite");
+        
+        roomTypeGroup = new ButtonGroup();
+        roomTypeGroup.add(regularRoomButton);
+        roomTypeGroup.add(suiteRoomButton);
+        
+        submitButton = new JButton("Submit Reservation");
+        saveButton = new JButton("Save Reservations to File");// write in file
+        newReservationButton = new JButton("New Reservation");
+        loadFileButton = new JButton("Load Room Data File");// read from file
+        showRoomListButton = new JButton("Show Room List");
+       
+        
+        inputPanel.add(new JLabel("Customer Name:"));
+        inputPanel.add(customerNameField);
+        inputPanel.add(new JLabel("Customer Phone:"));
+        inputPanel.add(customerPhoneField);
+        inputPanel.add(new JLabel("Capacity:"));
+        inputPanel.add(capacityField);
+        inputPanel.add(new JLabel("Check-In Date:"));
+        inputPanel.add(checkInField);
+        inputPanel.add(new JLabel("Check-Out Date:"));
+        inputPanel.add(checkOutField);
+        inputPanel.add(new JLabel("Room Type:"));
+        inputPanel.add(regularRoomButton);
+        inputPanel.add(new JLabel(""));
+        inputPanel.add(suiteRoomButton);
+        inputPanel.add(submitButton);
+        inputPanel.add(saveButton);
+        inputPanel.add(newReservationButton);
+        inputPanel.add(loadFileButton);
+        inputPanel.add(showRoomListButton);
+
+        // Display Area
+        displayArea = new JTextArea();
+        displayArea.setEditable(false);
+        JScrollPane scrollPane = new JScrollPane(displayArea);
+        add(inputPanel, BorderLayout.NORTH);
+        add(scrollPane, BorderLayout.CENTER);
+
+        // Event Handlers, note: it is used to refer to a method without making the code longer
+        submitButton.addActionListener(this::processReservation);
+        newReservationButton.addActionListener(this::clearReservationForm);
+        saveButton.addActionListener(e -> saveReservationToFile());
+        loadFileButton.addActionListener(e -> loadRoomDataFile());
+        showRoomListButton.addActionListener(e -> createRoomListFrame());
+        
+        
+
+        pack();
+        setLocationRelativeTo(null);
+        setVisible(true);
+    }
+    
+    
+   
+    
+    private void createRoomListFrame() {
+        if (roomListFrame == null) {
+            roomListFrame = new JFrame("Room List");
+            roomListFrame.setSize(200, 400);
+            JTextArea roomListArea = new JTextArea(10, 30);
+            roomListArea.setEditable(false);
+            roomListArea.setText("Room 101\nRoom 102\nRoom 103\nSuite 201\nSuite 202"); 
+            roomListFrame.add(new JScrollPane(roomListArea));
+            roomListFrame.pack();
+            roomListFrame.setLocationRelativeTo(this);
+        }
+        roomListFrame.setVisible(true); // Show the frame
+    }
+    
+   
+    private void clearReservationForm(ActionEvent event) {
+        // Clears and reset all text fields and buttons 
+        customerNameField.setText("");
+        customerPhoneField.setText("");
+        capacityField.setText("");
+        checkInField.setText("");
+        checkOutField.setText("");
+        regularRoomButton.setSelected(true);
+        displayArea.setText("");
+    }
+
+    private void processReservation(ActionEvent event) {
+        try {
+            String name = customerNameField.getText();
+            String phone = customerPhoneField.getText();
+            int capacity = Integer.parseInt(capacityField.getText());
+            if (capacity < 0)
+            	throw new IllegalArgumentException("Capacity cannot be less than zero.");
+            String roomType = regularRoomButton.isSelected() ? "Regular Room" : "Suite";
+            String checkIn = checkInField.getText();
+            String checkOut = checkOutField.getText();
+            validateDates(checkIn, checkOut);
+            displayArea.setText(String.format("Reservation processed for %s, %s. Phone: %s, Capacity: %d, Dates: %s to %s",
+                                             name, roomType, phone, capacity, checkIn, checkOut));
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Please enter a valid number for capacity.", "Input Error", JOptionPane.ERROR_MESSAGE);
+        } catch (IllegalArgumentException | InvalidDateException e) {
+            JOptionPane.showMessageDialog(this, e.getMessage(), "Input Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void validateDates(String checkIn, String checkOut) throws InvalidDateException {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        try {
+            Date checkInDate = sdf.parse(checkIn);
+            Date checkOutDate = sdf.parse(checkOut);
+            if (checkOutDate.before(checkInDate)) {
+                throw new InvalidDateException("Check-out date cannot be before check-in date.");
+            }
+        } catch (Exception e) {
+            throw new InvalidDateException("Invalid date format. Please use YYYY-MM-DD.");
+        }
+    }
+
+    private void loadRoomDataFile() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setCurrentDirectory(new File("."));
+        fileChooser.setDialogTitle("Select Room Data File");
+        int result = fileChooser.showOpenDialog(this);  //  'this' makes the file browser window relative to the frame
+
+        if (result == JFileChooser.APPROVE_OPTION) {
+            File fileToLoad = fileChooser.getSelectedFile();
+            try (Scanner scanner = new Scanner(fileToLoad)) {
+                String roomData = ""; 
+                while (scanner.hasNextLine()) {
+                    roomData += scanner.nextLine() + "\n"; 
+                }
+                displayArea.setText(roomData);  
+            } catch (FileNotFoundException e) {
+                JOptionPane.showMessageDialog(this, "Failed to read the file.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+  
+  
+    private void saveToFile(File file, String data) {
+        try (FileWriter writer = new FileWriter(file)) {
+            writer.write(data);
+            JOptionPane.showMessageDialog(this, "Data saved to " + file.getPath(), "Save Successful", JOptionPane.INFORMATION_MESSAGE);
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(this, "Error saving data: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private String formatReservationData() {
+        return String.format(
+            "Customer Name: %s\nCustomer Phone: %s\nRoom Type: %s\nCapacity: %s\nCheck-In Date: %s\nCheck-Out Date: %s",
+            customerNameField.getText(),
+            customerPhoneField.getText(),
+            regularRoomButton.isSelected() ? "Regular Room" : "Suite",
+            capacityField.getText(),
+            checkInField.getText(),
+            checkOutField.getText()
+        );
+    }
+
+    
+    private void saveReservationToFile() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Save Reservation");
+        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        fileChooser.setApproveButtonText("Save");
+
+        int userSelection = fileChooser.showSaveDialog(this);
+        if (userSelection == JFileChooser.APPROVE_OPTION) {
+            File fileToSave = fileChooser.getSelectedFile();
+            if (!fileToSave.getName().toLowerCase().endsWith(".txt")) {
+                fileToSave = new File(fileToSave.toString() + ".txt");
+            }
+            String reservationData = formatReservationData(); // Prepare data
+            saveToFile(fileToSave, reservationData); // Save data
+        }
+    }
+
+
+    
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(HotelReservationGUI::new);
+    }
+
+    
+}
+
